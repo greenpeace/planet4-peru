@@ -3,9 +3,12 @@
 	"description": "Greenpeace P4 Peru",
 	"license": "MIT",
 	"require": {
-		"greenpeace/planet4-child-theme" : "0.2.11"
+		"greenpeace/planet4-child-theme" : "*"
 	},
 	"scripts": {
-		"site:custom" : []
+		"core:language": "wp language core install es_PE; wp language core activate es_PE",
+		"site:custom": [
+			"@core:language"
+		]
 	}
 }
