@@ -1,4 +1,3 @@
----
 version: 2
 
 defaults: &defaults
@@ -229,8 +228,8 @@ jobs:
   create-sync-sql:
     <<: *defaults
     environment:
-      <<: *common_environment
-      <<: *production_environment
+       <<: *common_environment
+       <<: *production_environment
     working_directory: /tmp/workspace/src
     steps:
       - checkout
@@ -248,8 +247,8 @@ jobs:
   sync-sql-to-release:
     <<: *defaults
     environment:
-      <<: *common_environment
-      <<: *release_environment
+       <<: *common_environment
+       <<: *release_environment
     working_directory: /tmp/workspace/src
     steps:
       - checkout
@@ -262,11 +261,22 @@ jobs:
       - run: echo $SQLPROXY_KEY | base64 -d > key.json
       - run: /home/circleci/sql_to_sync_site.sh release
 
+  notify-sync-auto:
+    <<: *defaults
+    environment:
+       <<: *common_environment
+       <<: *production_environment
+    working_directory: /tmp/workspace/src
+    steps:
+      - checkout
+      - run: activate-gcloud-account.sh
+      - run: /home/circleci/notify-sync-admins.sh
+
   sync-sql-to-develop:
     <<: *defaults
     environment:
-      <<: *common_environment
-      <<: *develop_environment
+       <<: *common_environment
+       <<: *develop_environment
     working_directory: /tmp/workspace/src
     steps:
       - checkout
@@ -322,47 +332,47 @@ workflows:
   version: 2
   develop:
     jobs:
-      - build-branch:
-          <<: *develop_common
-      - deploy-develop:
-          <<: *develop_common
-          requires:
-            - build-branch
-      - test-develop:
-          <<: *develop_common
-          requires:
-            - deploy-develop
-      - prepare-release:
-          <<: *develop_common
-          requires:
-            - deploy-develop
+    - build-branch:
+        <<: *develop_common
+    - deploy-develop:
+        <<: *develop_common
+        requires:
+          - build-branch
+    - test-develop:
+        <<: *develop_common
+        requires:
+          - deploy-develop
+    - prepare-release:
+        <<: *develop_common
+        requires:
+          - deploy-develop
 
   release:
     jobs:
-      - build-release:
-          <<: *release_common
-      - deploy-release:
-          <<: *release_common
-          requires:
-            - build-release
-      - test-release:
-          <<: *release_common
-          requires:
-            - deploy-release
-      - notify-promote:
-          <<: *release_common
-          requires:
-            - test-release
-      - hold-promote:
-          <<: *release_common
-          type: approval
-          requires:
-            - test-release
-      - finish-release:
-          <<: *release_common
-          requires:
-            - hold-promote
-            - notify-promote
+    - build-release:
+        <<: *release_common
+    - deploy-release:
+        <<: *release_common
+        requires:
+          - build-release
+    - test-release:
+        <<: *release_common
+        requires:
+          - deploy-release
+    - notify-promote:
+        <<: *release_common
+        requires:
+          - test-release
+    - hold-promote:
+        <<: *release_common
+        type: approval
+        requires:
+          - test-release
+    - finish-release:
+        <<: *release_common
+        requires:
+          - hold-promote
+          - notify-promote
   tag:
     jobs:
       - build-tag:
@@ -374,16 +384,16 @@ workflows:
 
   create-sync-sql:
     jobs:
-      - create-sync-sql:
-          <<: *sync_common
-      - sync-sql-to-release:
-          <<: *sync_common
-          requires:
-            - create-sync-sql
-      - sync-sql-to-develop:
-          <<: *sync_common
-          requires:
-            - sync-sql-to-release
+    - create-sync-sql:
+        <<: *sync_common
+    - sync-sql-to-release:
+        <<: *sync_common
+        requires:
+          - create-sync-sql
+    - sync-sql-to-develop:
+        <<: *sync_common
+        requires:
+          - sync-sql-to-release
 
   create-sync-auto:
     triggers:
@@ -404,6 +414,18 @@ workflows:
           context: org-global
           requires:
             - sync-sql-to-release
+
+  notify-sync-auto:
+    triggers:
+      - schedule:
+          cron: "10 02 28 * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - notify-sync-auto:
+          context: org-global
 
   backup:
     triggers:
@@ -426,4 +448,3 @@ workflows:
               ignore: /.*/
             tags:
               only: /backup.*/
-
