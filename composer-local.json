@@ -1,13 +1,14 @@
 {
-    "name": "greenpeace/planet4-peru",
-    "description": "Greenpeace P4 Peru",
-    "license": "MIT",
-    "require": {
-    },
-    "scripts": {
-        "core:language": "wp language core install es_PE; wp language core activate es_PE",
-        "site:custom": [
-            "@core:language"
-        ]
-    }
+  "name": "greenpeace/planet4-peru",
+  "description": "Greenpeace P4 Peru",
+  "license": "MIT",
+  "require": {
+    "greenpeace/planet4-child-theme-peru": "dev-main"
+  },
+  "scripts": {
+    "core:language": "wp language core install es_PE; wp language core activate es_PE",
+    "site:custom": [
+      "@core:language"
+    ]
+  }
 }
